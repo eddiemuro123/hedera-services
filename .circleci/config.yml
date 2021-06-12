@@ -2091,7 +2091,7 @@ workflows:
             filters:
               branches:
                 ignore:
-                  - /.*-PERF/
+                  - token-dispenser-poc
             workflow-name: "Continuous-integration"
         - build-platform-and-services:
             context: SonarCloud

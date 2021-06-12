@@ -23,6 +23,7 @@ package com.hedera.services.bdd.spec.infrastructure.meta;
 import com.hedera.services.bdd.spec.HapiSpecSetup;
 
 public class ContractResources {
+	public static final String TOKEN_DISPENSER_BYTECODE_PATH = bytecodePath("TokenDispenser");
 	public static final String SIMPLE_STORAGE_BYTECODE_PATH = bytecodePath("simpleStorage");
 	public static final String PAYABLE_CONTRACT_BYTECODE_PATH = bytecodePath("PayReceivable");
 	public static final String DELEGATING_CONTRACT_BYTECODE_PATH = bytecodePath("CreateTrivial");
@@ -50,6 +51,8 @@ public class ContractResources {
 	public static final String PAY_TEST_BYTECODE_PATH = bytecodePath("PayTest");
 	public static final String DOUBLE_SEND_BYTECODE_PATH = bytecodePath("DoubleSend");
 
+	public static final String DISPENSE_ABI = "{\"constant\":false,\"inputs\":[],\"name\":\"dispense\",\"outputs\":[]," +
+			"\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"}";
 	public static final String CREATE_CHILD_ABI = "{\"constant\":false," +
 			"\"inputs\":[],\"name\":\"create\"," +
 			"\"outputs\":[]," +
