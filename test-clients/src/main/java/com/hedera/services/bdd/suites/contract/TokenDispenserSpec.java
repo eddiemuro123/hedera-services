@@ -28,19 +28,11 @@ import com.hedera.services.bdd.suites.HapiApiSuite;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hedera.services.bdd.spec.HapiApiSpec.defaultHapiSpec;
-import static com.hedera.services.bdd.spec.assertions.AssertUtils.inOrder;
-import static com.hedera.services.bdd.spec.assertions.ContractFnResultAsserts.isContractWith;
-import static com.hedera.services.bdd.spec.assertions.ContractFnResultAsserts.isLiteralResult;
-import static com.hedera.services.bdd.spec.assertions.ContractFnResultAsserts.resultWith;
-import static com.hedera.services.bdd.spec.assertions.ContractInfoAsserts.contractWith;
-import static com.hedera.services.bdd.spec.assertions.TransactionRecordAsserts.recordWith;
-import static com.hedera.services.bdd.spec.keys.KeyFactory.KeyType.THRESHOLD;
-import static com.hedera.services.bdd.spec.queries.QueryVerbs.getContractInfo;
+import static com.hedera.services.bdd.spec.queries.QueryVerbs.getAccountBalance;
 import static com.hedera.services.bdd.spec.queries.QueryVerbs.getTxnRecord;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.contractCall;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.contractCreate;
@@ -49,19 +41,14 @@ import static com.hedera.services.bdd.spec.transactions.TxnVerbs.fileCreate;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenAssociate;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenCreate;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenUpdate;
-import static com.hedera.services.bdd.spec.utilops.UtilVerbs.contractListWithPropertiesInheritedFrom;
 import static com.hedera.services.bdd.spec.utilops.UtilVerbs.newKeyNamed;
 import static com.hedera.services.bdd.spec.utilops.UtilVerbs.sourcing;
 import static java.lang.System.arraycopy;
 
 public class TokenDispenserSpec extends HapiApiSuite {
 	private static final Logger log = LogManager.getLogger(TokenDispenserSpec.class);
-	private static final long depositAmount = 1000;
 
 	public static void main(String... args) {
-		/* Has a static initializer whose behavior seems influenced by initialization of ForkJoinPool#commonPool. */
-		new org.ethereum.crypto.HashUtil();
-
 		new TokenDispenserSpec().runSuiteSync();
 	}
 
@@ -73,9 +60,21 @@ public class TokenDispenserSpec extends HapiApiSuite {
 		);
 	}
 
-	HapiApiSpec tokenDispenserPoc() {
+	/**
+	 * Does the following to test the TokenDispenser POC:
+	 * <ol>
+	 *     <li>Creates a token with a supply of 100 units.</li>
+	 *     <li>Instantiates a TokenDispenser contract with the id of the token.</li>
+	 *     <li>Updates the token to have the contract as its treasury.</li>
+	 *     <li>Associates a token purchaser account to the token.</li>
+	 *     <li>Calls the contract's dispense() method, sending 10 tinybars.</li>
+	 *     <li>Confirms purchaser account has received 10 tokens.</li>
+	 * </ol>
+	 */
+	private HapiApiSpec tokenDispenserPoc() {
 		final var bytecode = "bytecode";
 		final var tokenDispenser = "contract";
+		final var tokenPurchaser = "civilian";
 		final var token = "token";
 		final var adminKey = "adminKey";
 
@@ -95,8 +94,7 @@ public class TokenDispenserSpec extends HapiApiSuite {
 								.initialSupply(supplyToDispense)
 								.decimals(0)
 								.onCreation(tId -> tokenSolidityAddr.set(
-										asSolidityAddress((int) tId.getShardNum(), tId.getRealmNum(),
-												tId.getTokenNum()))),
+										asSolidityAddress((int) tId.getShardNum(), tId.getRealmNum(), tId.getTokenNum()))),
 						fileCreate(bytecode)
 								.path(ContractResources.TOKEN_DISPENSER_BYTECODE_PATH),
 						sourcing(() ->
@@ -109,16 +107,20 @@ public class TokenDispenserSpec extends HapiApiSuite {
 						tokenAssociate(tokenDispenser, token),
 						tokenUpdate(token).treasury(tokenDispenser)
 				).when(
+						cryptoCreate(tokenPurchaser).balance(ONE_HUNDRED_HBARS),
+						tokenAssociate(tokenPurchaser, token),
 						contractCall(tokenDispenser, ContractResources.DISPENSE_ABI)
+								.payingWith(tokenPurchaser)
 								.via(purchaseTxn)
 								.gas(300_000L)
 								.sending(tinybarsToSpend)
 				).then(
-						getTxnRecord(purchaseTxn).logged()
+						getTxnRecord(purchaseTxn).logged(),
+						getAccountBalance(tokenPurchaser).hasTokenBalance(token, tinybarsToSpend).logged()
 				);
 	}
 
-	public static byte[] asSolidityAddress(int shard, long realm, long num) {
+	private static byte[] asSolidityAddress(int shard, long realm, long num) {
 		byte[] solidityAddress = new byte[20];
 
 		arraycopy(Ints.toByteArray(shard), 0, solidityAddress, 0, 4);
@@ -126,54 +128,6 @@ public class TokenDispenserSpec extends HapiApiSuite {
 		arraycopy(Longs.toByteArray(num), 0, solidityAddress, 12, 8);
 
 		return solidityAddress;
-	}
-
-	HapiApiSpec depositSuccess() {
-		return defaultHapiSpec("DepositSuccess")
-				.given(
-						fileCreate("payableBytecode").path(ContractResources.PAYABLE_CONTRACT_BYTECODE_PATH),
-						contractCreate("payableContract").bytecode("payableBytecode").adminKey(THRESHOLD)
-				).when(
-						contractCall("payableContract", ContractResources.DEPOSIT_ABI, depositAmount)
-								.via("payTxn").sending(depositAmount)
-				).then(
-						getTxnRecord("payTxn")
-								.hasPriority(recordWith().contractCallResult(
-										resultWith().logs(inOrder()))));
-	}
-
-
-	HapiApiSpec vanillaSuccess() {
-		return defaultHapiSpec("VanillaSuccess")
-				.given(
-						fileCreate("parentDelegateBytecode").path(ContractResources.DELEGATING_CONTRACT_BYTECODE_PATH),
-						contractCreate("parentDelegate").bytecode("parentDelegateBytecode").adminKey(THRESHOLD),
-						getContractInfo("parentDelegate").saveToRegistry("parentInfo")
-				).when(
-						contractCall("parentDelegate", ContractResources.CREATE_CHILD_ABI).via("createChildTxn"),
-						contractCall("parentDelegate", ContractResources.GET_CHILD_RESULT_ABI).via("getChildResultTxn"),
-						contractCall("parentDelegate", ContractResources.GET_CHILD_ADDRESS_ABI).via(
-								"getChildAddressTxn")
-				).then(
-						getTxnRecord("createChildTxn")
-								.saveCreatedContractListToRegistry("createChild")
-								.logged(),
-						getTxnRecord("getChildResultTxn")
-								.hasPriority(recordWith().contractCallResult(
-										resultWith().resultThruAbi(
-												ContractResources.GET_CHILD_RESULT_ABI,
-												isLiteralResult(new Object[] { BigInteger.valueOf(7L) })))),
-						getTxnRecord("getChildAddressTxn")
-								.hasPriority(recordWith().contractCallResult(
-										resultWith()
-												.resultThruAbi(
-														ContractResources.GET_CHILD_ADDRESS_ABI,
-														isContractWith(contractWith()
-																.nonNullContractId()
-																.propertiesInheritedFrom("parentInfo")))
-												.logs(inOrder()))),
-						contractListWithPropertiesInheritedFrom("createChildCallResult", 1, "parentInfo")
-				);
 	}
 
 	@Override
