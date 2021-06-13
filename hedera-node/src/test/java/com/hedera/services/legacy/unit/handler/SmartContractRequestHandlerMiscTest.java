@@ -96,6 +96,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 
+import static com.hedera.services.store.tokens.ExceptionalTokenStore.NOOP_TOKEN_STORE;
 import static com.hedera.services.utils.EntityIdUtils.accountParsedFromSolidityAddress;
 import static com.hedera.services.utils.EntityIdUtils.asContract;
 import static com.hedera.test.mocks.TestUsagePricesProvider.TEST_USAGE_PRICES;
@@ -169,7 +170,7 @@ public class SmartContractRequestHandlerMiscTest {
             mock(AccountRecordsHistorian.class),
             new MockGlobalDynamicProps(),
             delegate);
-    ledgerSource = new LedgerAccountsSource(ledger);
+    ledgerSource = new LedgerAccountsSource(NOOP_TOKEN_STORE, ledger);
     Source<byte[], AccountState> repDatabase = ledgerSource;
     ServicesRepositoryRoot repository = new ServicesRepositoryRoot(repDatabase, repDBFile);
     repository.setStoragePersistence(new StoragePersistenceImpl(storageMap));

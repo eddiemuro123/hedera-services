@@ -33,6 +33,7 @@ import com.hederahashgraph.api.proto.java.HederaFunctionality;
 import com.hederahashgraph.api.proto.java.Key;
 import com.hederahashgraph.api.proto.java.Timestamp;
 import com.hederahashgraph.api.proto.java.TokenCreateTransactionBody;
+import com.hederahashgraph.api.proto.java.TokenID;
 import com.hederahashgraph.api.proto.java.Transaction;
 import com.hederahashgraph.api.proto.java.TransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionResponse;
@@ -75,6 +76,7 @@ public class HapiTokenCreate extends HapiTxnOp<HapiTokenCreate> {
 	private Optional<String> autoRenewAccount = Optional.empty();
 	private Optional<Function<HapiApiSpec, String>> symbolFn = Optional.empty();
 	private Optional<Function<HapiApiSpec, String>> nameFn = Optional.empty();
+	private Optional<Consumer<TokenID>> creationObs = Optional.empty();
 
 	@Override
 	public HederaFunctionality type() {
@@ -91,6 +93,11 @@ public class HapiTokenCreate extends HapiTxnOp<HapiTokenCreate> {
 
 	public HapiTokenCreate entityMemo(String memo) {
 		this.entityMemo = Optional.of(memo);
+		return this;
+	}
+
+	public HapiTokenCreate onCreation(Consumer<TokenID> creationObs) {
+		this.creationObs = Optional.of(creationObs);
 		return this;
 	}
 
@@ -259,6 +266,7 @@ public class HapiTokenCreate extends HapiTxnOp<HapiTokenCreate> {
 		registry.saveMemo(token, memo.orElse(""));
 		registry.saveTokenId(token, lastReceipt.getTokenID());
 		registry.saveTreasury(token, treasury.orElse(spec.setup().defaultPayerName()));
+		creationObs.ifPresent(obs -> obs.accept(lastReceipt.getTokenID()));
 
 		try {
 			var submittedBody = CommonUtils.extractTransactionBody(txnSubmitted);

@@ -20,6 +20,8 @@ package com.hedera.services.bdd.suites.contract;
  * ‍
  */
 
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
 import com.hedera.services.bdd.spec.HapiApiSpec;
 import com.hedera.services.bdd.spec.infrastructure.meta.ContractResources;
 import com.hedera.services.bdd.suites.HapiApiSuite;
@@ -28,6 +30,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.hedera.services.bdd.spec.HapiApiSpec.defaultHapiSpec;
 import static com.hedera.services.bdd.spec.assertions.AssertUtils.inOrder;
@@ -41,8 +44,15 @@ import static com.hedera.services.bdd.spec.queries.QueryVerbs.getContractInfo;
 import static com.hedera.services.bdd.spec.queries.QueryVerbs.getTxnRecord;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.contractCall;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.contractCreate;
+import static com.hedera.services.bdd.spec.transactions.TxnVerbs.cryptoCreate;
 import static com.hedera.services.bdd.spec.transactions.TxnVerbs.fileCreate;
+import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenAssociate;
+import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenCreate;
+import static com.hedera.services.bdd.spec.transactions.TxnVerbs.tokenUpdate;
 import static com.hedera.services.bdd.spec.utilops.UtilVerbs.contractListWithPropertiesInheritedFrom;
+import static com.hedera.services.bdd.spec.utilops.UtilVerbs.newKeyNamed;
+import static com.hedera.services.bdd.spec.utilops.UtilVerbs.sourcing;
+import static java.lang.System.arraycopy;
 
 public class TokenDispenserSpec extends HapiApiSuite {
 	private static final Logger log = LogManager.getLogger(TokenDispenserSpec.class);
@@ -65,26 +75,57 @@ public class TokenDispenserSpec extends HapiApiSuite {
 
 	HapiApiSpec tokenDispenserPoc() {
 		final var bytecode = "bytecode";
-		final var tokenDispenserPoc = "contract";
+		final var tokenDispenser = "contract";
+		final var token = "token";
+		final var adminKey = "adminKey";
 
+		final AtomicReference<byte[]> tokenSolidityAddr = new AtomicReference<>();
+
+		final var supplyToDispense = 100;
 		final var purchaseTxn = "purchaseTxn";
-
-		final long tinybarsToSpend = 1_000_000L;
+		final long tinybarsToSpend = 10;
 
 		return defaultHapiSpec("TokenDispenserPoc")
 				.given(
+						newKeyNamed(adminKey),
+						cryptoCreate(TOKEN_TREASURY),
+						tokenCreate(token)
+								.adminKey(adminKey)
+								.treasury(TOKEN_TREASURY)
+								.initialSupply(supplyToDispense)
+								.decimals(0)
+								.onCreation(tId -> tokenSolidityAddr.set(
+										asSolidityAddress((int) tId.getShardNum(), tId.getRealmNum(),
+												tId.getTokenNum()))),
 						fileCreate(bytecode)
 								.path(ContractResources.TOKEN_DISPENSER_BYTECODE_PATH),
-						contractCreate(tokenDispenserPoc)
-								.bytecode(bytecode)
+						sourcing(() ->
+								contractCreate(
+										tokenDispenser,
+										ContractResources.CONSTRUCT_DISPENSOR_ABI,
+										tokenSolidityAddr.get()
+								)
+										.bytecode(bytecode)),
+						tokenAssociate(tokenDispenser, token),
+						tokenUpdate(token).treasury(tokenDispenser)
 				).when(
-						contractCall(tokenDispenserPoc, ContractResources.DISPENSE_ABI)
+						contractCall(tokenDispenser, ContractResources.DISPENSE_ABI)
 								.via(purchaseTxn)
 								.gas(300_000L)
 								.sending(tinybarsToSpend)
 				).then(
 						getTxnRecord(purchaseTxn).logged()
 				);
+	}
+
+	public static byte[] asSolidityAddress(int shard, long realm, long num) {
+		byte[] solidityAddress = new byte[20];
+
+		arraycopy(Ints.toByteArray(shard), 0, solidityAddress, 0, 4);
+		arraycopy(Longs.toByteArray(realm), 0, solidityAddress, 4, 8);
+		arraycopy(Longs.toByteArray(num), 0, solidityAddress, 12, 8);
+
+		return solidityAddress;
 	}
 
 	HapiApiSpec depositSuccess() {

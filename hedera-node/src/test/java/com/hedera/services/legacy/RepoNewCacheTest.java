@@ -55,6 +55,7 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 
+import static com.hedera.services.store.tokens.ExceptionalTokenStore.NOOP_TOKEN_STORE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.BDDMockito.mock;
 
@@ -79,7 +80,7 @@ public class RepoNewCacheTest {
 				mock(AccountRecordsHistorian.class),
 				new MockGlobalDynamicProps(),
 				delegate);
-		Source<byte[], AccountState> repDatabase = new LedgerAccountsSource(ledger);
+		Source<byte[], AccountState> repDatabase = new LedgerAccountsSource(NOOP_TOKEN_STORE, ledger);
 		ServicesRepositoryRoot repository = new ServicesRepositoryRoot(repDatabase, repDBFile);
 		String key = CommonUtils.hex(EntityIdUtils.asSolidityAddress(0, 0, 1));
 		byte[] keyByte = null;
@@ -176,7 +177,7 @@ public class RepoNewCacheTest {
 				mock(AccountRecordsHistorian.class),
 				new MockGlobalDynamicProps(),
 				delegate);
-		Source<byte[], AccountState> accountSource = new LedgerAccountsSource(ledger);
+		Source<byte[], AccountState> accountSource = new LedgerAccountsSource(NOOP_TOKEN_STORE, ledger);
 		ServicesRepositoryRoot repository = new ServicesRepositoryRoot(accountSource, repDBFile);
 
 		String someKey = CommonUtils.hex(EntityIdUtils.asSolidityAddress(0, 0, 1));

@@ -27,6 +27,7 @@ import com.hedera.services.ledger.properties.AccountProperty;
 import com.hedera.services.legacy.core.jproto.JKey;
 import com.hedera.services.state.merkle.MerkleAccount;
 import com.hedera.services.state.submerkle.EntityId;
+import com.hedera.services.store.tokens.TokenStore;
 import com.hedera.services.utils.EntityIdUtils;
 import com.hedera.test.extensions.LogCaptor;
 import com.hedera.test.extensions.LogCaptureExtension;
@@ -77,6 +78,7 @@ class LedgerAccountsSourceTest {
 	AccountID target = IdUtils.asAccount("1.2.13257");
 	byte[] key = EntityIdUtils.asSolidityAddress(1, 2, 13257);
 
+	TokenStore tokenStore;
 	HederaLedger ledger;
 
 	@Inject
@@ -87,8 +89,9 @@ class LedgerAccountsSourceTest {
 	@BeforeEach
 	void setup() {
 		ledger = mock(HederaLedger.class);
+		tokenStore = mock(TokenStore.class);
 
-		subject = new LedgerAccountsSource(ledger);
+		subject = new LedgerAccountsSource(tokenStore, ledger);
 	}
 
 	@Test

@@ -92,6 +92,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Date;
 
+import static com.hedera.services.store.tokens.ExceptionalTokenStore.NOOP_TOKEN_STORE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -151,7 +152,7 @@ public class SmartContractRequestHandlerPayableTest {
             mock(AccountRecordsHistorian.class),
             new MockGlobalDynamicProps(),
             delegate);
-    ledgerSource = new LedgerAccountsSource(ledger);
+    ledgerSource = new LedgerAccountsSource(NOOP_TOKEN_STORE, ledger);
     Source<byte[], AccountState> repDatabase = ledgerSource;
     ServicesRepositoryRoot repository = new ServicesRepositoryRoot(repDatabase, repDBFile);
     return repository;

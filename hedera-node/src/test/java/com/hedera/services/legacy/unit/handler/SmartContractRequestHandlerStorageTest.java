@@ -70,9 +70,9 @@ import com.hederahashgraph.api.proto.java.Transaction;
 import com.hederahashgraph.api.proto.java.TransactionBody;
 import com.hederahashgraph.api.proto.java.TransactionRecord;
 import com.hederahashgraph.builder.RequestBuilder;
+import com.swirlds.common.CommonUtils;
 import com.swirlds.common.constructable.ClassConstructorPair;
 import com.swirlds.common.constructable.ConstructableRegistry;
-import com.swirlds.common.CommonUtils;
 import com.swirlds.fcmap.FCMap;
 import com.swirlds.fcmap.internal.FCMLeaf;
 import net.i2p.crypto.eddsa.EdDSAPublicKey;
@@ -103,6 +103,7 @@ import java.util.List;
 import static com.hedera.services.legacy.util.SCEncoding.GET_MY_VALUE_ABI;
 import static com.hedera.services.legacy.util.SCEncoding.GROW_CHILD_ABI;
 import static com.hedera.services.legacy.util.SCEncoding.encodeVia;
+import static com.hedera.services.store.tokens.ExceptionalTokenStore.NOOP_TOKEN_STORE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
@@ -158,7 +159,7 @@ public class SmartContractRequestHandlerStorageTest {
             mock(AccountRecordsHistorian.class),
             new MockGlobalDynamicProps(),
             delegate);
-    ledgerSource = new LedgerAccountsSource(ledger);
+    ledgerSource = new LedgerAccountsSource(NOOP_TOKEN_STORE, ledger);
     Source<byte[], AccountState> repDatabase = ledgerSource;
     ServicesRepositoryRoot repository = new ServicesRepositoryRoot(repDatabase, repDBFile);
     repository.setStoragePersistence(new StoragePersistenceImpl(storageMap));

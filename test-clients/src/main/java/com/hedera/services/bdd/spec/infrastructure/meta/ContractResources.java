@@ -51,6 +51,9 @@ public class ContractResources {
 	public static final String PAY_TEST_BYTECODE_PATH = bytecodePath("PayTest");
 	public static final String DOUBLE_SEND_BYTECODE_PATH = bytecodePath("DoubleSend");
 
+	public static final String CONSTRUCT_DISPENSOR_ABI = "{\"inputs\":[{\"internalType\":\"address\"," +
+			"\"name\":\"_tokenType\",\"type\":\"address\"}],\"payable\":true,\"stateMutability\":\"payable\"," +
+			"\"type\":\"constructor\"}";
 	public static final String DISPENSE_ABI = "{\"constant\":false,\"inputs\":[],\"name\":\"dispense\",\"outputs\":[]," +
 			"\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"}";
 	public static final String CREATE_CHILD_ABI = "{\"constant\":false," +

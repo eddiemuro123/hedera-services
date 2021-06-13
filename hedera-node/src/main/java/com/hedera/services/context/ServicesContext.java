@@ -244,6 +244,7 @@ import com.hedera.services.store.AccountStore;
 import com.hedera.services.store.TypedTokenStore;
 import com.hedera.services.store.schedule.HederaScheduleStore;
 import com.hedera.services.store.schedule.ScheduleStore;
+import com.hedera.services.store.tokens.ExceptionalTokenStore;
 import com.hedera.services.store.tokens.HederaTokenStore;
 import com.hedera.services.store.tokens.TokenStore;
 import com.hedera.services.stream.NonBlockingHandoff;
@@ -1904,7 +1905,7 @@ public class ServicesContext {
 					NOOP_RECORDS_HISTORIAN,
 					globalDynamicProperties(),
 					pureDelegate);
-			Source<byte[], AccountState> pureAccountSource = new LedgerAccountsSource(pureLedger);
+			Source<byte[], AccountState> pureAccountSource = new LedgerAccountsSource(NOOP_TOKEN_STORE, pureLedger);
 			newPureRepo = () -> {
 				var pureRepository = new ServicesRepositoryRoot(pureAccountSource, bytecodeDb());
 				pureRepository.setStoragePersistence(storagePersistence());
@@ -1923,7 +1924,7 @@ public class ServicesContext {
 
 	public LedgerAccountsSource accountSource() {
 		if (accountSource == null) {
-			accountSource = new LedgerAccountsSource(ledger());
+			accountSource = new LedgerAccountsSource(tokenStore(), ledger());
 		}
 		return accountSource;
 	}
