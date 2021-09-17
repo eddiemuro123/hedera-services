@@ -299,6 +299,14 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
+      <id>experimental-sdk</id>
+      <name>0.18.2-alpha.1 SDK</name>
+      <url>https://oss.sonatype.org/content/repositories/comswirlds-1146</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
       <id>local-repo-for-swirlds-sdk</id>
       <url>file:${project.basedir}/localSwirldsSDK</url>
     </repository>

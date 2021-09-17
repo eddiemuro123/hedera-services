@@ -110,9 +110,9 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
-      <id>proto-staging</id>
-      <name>0.18.0-alpha.3 Protobufs</name>
-      <url>https://oss.sonatype.org/content/repositories/comhederahashgraph-1354</url>
+      <id>experimental-sdk</id>
+      <name>0.18.2-alpha.1 SDK</name>
+      <url>https://oss.sonatype.org/content/repositories/comswirlds-1146</url>
     </repository>
     <repository>
       <id>ossrh-snapshots</id>
@@ -177,7 +177,7 @@
     <log4j.version>2.14.1</log4j.version>
     <netty.version>4.1.66.Final</netty.version>
     <protobuf-java.version>3.17.3</protobuf-java.version>
-    <swirlds.version>0.18.1</swirlds.version>
+    <swirlds.version>0.18.2-alpha.1</swirlds.version>
     <!-- Test dependency properties in alphabetical order -->
     <hamcrest.version>2.2</hamcrest.version>
     <junit5.version>5.8.0</junit5.version>
