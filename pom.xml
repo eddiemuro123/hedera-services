@@ -102,6 +102,14 @@
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
+      <id>alpha-sdk</id>
+      <name>Alpha Swirlds SDK</name>
+      <url>https://oss.sonatype.org/content/repositories/comswirlds-1148</url>
+    </repository>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
       <id>central</id>
       <name>Central Repository</name>
       <url>https://repo.maven.apache.org/maven2</url>
@@ -169,7 +177,7 @@
     <log4j.version>2.14.1</log4j.version>
     <netty.version>4.1.66.Final</netty.version>
     <protobuf-java.version>3.18.0</protobuf-java.version>
-    <swirlds.version>0.18.1</swirlds.version>
+    <swirlds.version>0.18.2-alpha.2</swirlds.version>
     <!-- Test dependency properties in alphabetical order -->
     <hamcrest.version>2.2</hamcrest.version>
     <junit5.version>5.8.0</junit5.version>
