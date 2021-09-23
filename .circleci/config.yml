@@ -1174,7 +1174,7 @@ workflows:
               branches:
                 ignore:
                   - NONE
-                  - sdk-0182-alpha2-sans-fcotmr
+                  - sdk-0182-alpha3-sans-fcotmr
             workflow-name: "Continuous-integration"
         - sonar-check:
             context: SonarCloud

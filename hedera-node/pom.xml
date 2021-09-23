@@ -301,7 +301,7 @@
       </snapshots>
       <id>alpha-sdk</id>
       <name>Alpha Swirlds SDK</name>
-      <url>https://oss.sonatype.org/content/repositories/comswirlds-1148</url>
+      <url>https://oss.sonatype.org/content/repositories/comswirlds-1150</url>
     </repository>
     <repository>
       <snapshots>

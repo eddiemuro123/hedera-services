@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 
+@Disabled
 @ExtendWith(MockitoExtension.class)
 class ExecutionTimeTrackerTest {
 	private final TransactionID aTxnId = TransactionID.newBuilder()
