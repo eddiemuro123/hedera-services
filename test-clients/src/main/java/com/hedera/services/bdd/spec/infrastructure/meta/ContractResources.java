@@ -42,7 +42,7 @@ public class ContractResources {
 	public static final String CHILD_STORAGE_BYTECODE_PATH = bytecodePath("ChildStorage");
 	public static final String ABANDONING_PARENT_BYTECODE_PATH = bytecodePath("AbandoningParent");
 	public static final String PAY_TEST_SELF_DESTRUCT_BYTECODE_PATH = bytecodePath("PayTestSelfDestruct");
-	public static final String PAY_RECEIVABLE_AMOUNT_BYTECODE_PATH = bytecodePath("PayReceivableAmount");
+	public static final String PARENT_CHILD_TRANSFER_BYTECODE_PATH = bytecodePath("ParentChildTransfer");
 	public static final String OC_TOKEN_BYTECODE_PATH = bytecodePath("octoken");
 	public static final String ADDRESS_BOOK_BYTECODE_PATH = bytecodePath("AddressBook");
 	public static final String JURISDICTIONS_BYTECODE_PATH = bytecodePath("Jurisdictions");
@@ -149,7 +149,7 @@ public class ContractResources {
 			" \"inputs\": [ { \"internalType\": \"uint256\", \"name\": \"_size\", \"type\": \"uint256\" } ], \"name\": \"setSize\"," +
 			" \"outputs\": [], \"payable\": false, \"stateMutability\": \"nonpayable\", \"type\": \"function\" }";
 	public static final String GROW_ARRAY_GROW_TO = "{\"constant\": false," +
-			"\"inputs\": [{\"internalType\": \"uint256\",\"name\": \"_targetSize\",\"type\": \"uint256\"}]," +
+			"\"inputs\": [{\"internalType\": \"uint256\",\"name\": \"_limit\",\"type\": \"uint256\"}]," +
 			"\"name\": \"growTo\",\"outputs\": [],\"payable\": false,\"stateMutability\": \"nonpayable\"," +
 			"\"type\": \"function\"}";
 	public static final String GROW_ARRAY_CHANGE_ARRAY = "{\"constant\": false," +
@@ -466,10 +466,12 @@ public class ContractResources {
 			"{\"internalType\": \"uint256\",\"name\": \"_amount\",\"type\": \"uint256\"}]," +
 			"\"name\": \"transferToAddress\",\"outputs\": [],\"payable\": false," +
 			"\"stateMutability\": \"nonpayable\",\"type\": \"function\"}";
+	public static final String PARENT_CHILD_TRANSFER_TRANSFER_TO_CHILD_ABI = "{\"constant\": false,\"inputs\": " +
+			"[{\"internalType\": \"uint256\",\"name\": \"_amount\",\"type\": \"uint256\"}]," +
+			"\"name\": \"transferToChild\",\"outputs\": [],\"payable\": false,\"stateMutability\": \"nonpayable\"," +
+			"\"type\": \"function\"}";
 
 	public static String bytecodePath(String bytecode) {
 		return String.format("src/main/resource/contract/bytecodes/%s.bin", bytecode);
 	}
-
-	public static final int CREATED_TRIVIAL_CONTRACT_RETURNS = 7;
 }

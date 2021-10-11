@@ -45,8 +45,6 @@ import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
@@ -227,11 +225,11 @@ abstract class EvmTxProcessor {
 		final Gas selfDestructRefund =
 				gasCalculator.getSelfDestructRefundAmount().times(initialFrame.getSelfDestructs().size()).min(
 						gasUsedByTransaction.dividedBy(gasCalculator.getMaxRefundQuotient()));
-		gasUsedByTransaction = gasUsedByTransaction.minus(selfDestructRefund);
+		gasUsedByTransaction = gasUsedByTransaction.minus(selfDestructRefund).minus(initialFrame.getGasRefund());
 
 		if (!isStatic) {
 			// return gas price to accounts
-			final Gas refunded = Gas.of(gasLimit).minus(gasUsedByTransaction).plus(initialFrame.getGasRefund());
+			final Gas refunded = Gas.of(gasLimit).minus(gasUsedByTransaction);
 			final Wei refundedWei = refunded.priceFor(Wei.of(gasPrice));
 
 			mutableSender.incrementBalance(refundedWei);
@@ -249,11 +247,8 @@ abstract class EvmTxProcessor {
 
 		/* Externalise Result */
 		if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-			final List<Log> logs = initialFrame.getLogs();
-			final var bloom = LogsBloomFilter.builder().insertLogs(logs).build();
 			return TransactionProcessingResult.successful(
-					logs,
-					Optional.of(bloom),
+					initialFrame.getLogs(),
 					gasUsedByTransaction.toLong(),
 					gasPrice,
 					initialFrame.getOutputData(),
