@@ -51,6 +51,7 @@ public class ContractResources {
 	public static final String DOUBLE_SEND_BYTECODE_PATH = bytecodePath("DoubleSend");
 	public static final String EMPTY_CONSTRUCTOR = bytecodePath("EmptyConstructor");
 	public static final String PAYABLE_CONSTRUCTOR = bytecodePath("PayableConstructor");
+	public static final String DO_SSTORES_PATH = bytecodePath("DoSStores");
 
 	public static final String BENCHMARK_CONTRACT = bytecodePath("Benchmark");
 	public static final String SIMPLE_UPDATE = bytecodePath("SimpleUpdate");
@@ -70,6 +71,13 @@ public class ContractResources {
 	public static final String TWO_SSTORES = "{ \"inputs\": [ { \"internalType\": \"bytes32\", \"name\": \"_singleProp\", \"type\": \"bytes32\" } ], \"name\": \"twoSSTOREs\", \"outputs\": [], \"stateMutability\": \"nonpayable\", \"type\": \"function\" }";
 
 	public static final String BENCHMARK_GET_COUNTER = "{ \"inputs\": [], \"name\": \"counter\", \"outputs\": [ { \"internalType\": \"uint256\", \"name\": \"\", \"type\": \"uint256\" } ], \"stateMutability\": \"view\", \"type\": \"function\" }";
+
+	public static final String DO_SSTORES_CONSTRUCTOR_ABI = "{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"n\"," +
+			"\"type\":\"uint32\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}";
+	public static final String HIT_SOME_TARGETS_ABI = "{\"constant\":false,\"inputs\":[{\"internalType\":\"uint32[]\"," +
+			"\"name\":\"at\",\"type\":\"uint32[]\"},{\"internalType\":\"uint256\",\"name\":\"v\"," +
+			"\"type\":\"uint256\"}],\"name\":\"hitSomeTargets\",\"outputs\":[],\"payable\":false," +
+			"\"stateMutability\":\"nonpayable\",\"type\":\"function\"}";
 
 	public static final String CREATE_CHILD_ABI = "{\"constant\":false," +
 			"\"inputs\":[],\"name\":\"create\"," +

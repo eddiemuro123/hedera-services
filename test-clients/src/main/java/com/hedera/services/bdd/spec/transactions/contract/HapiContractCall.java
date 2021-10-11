@@ -36,6 +36,12 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.LongConsumer;
+
+import static com.hedera.services.bdd.spec.queries.QueryVerbs.getTxnRecord;
+import static com.hedera.services.bdd.spec.transactions.TxnUtils.extractTxnId;
+import static com.hedera.services.bdd.spec.utilops.CustomSpecAssert.allRunFor;
+import static com.hedera.services.bdd.suites.HapiApiSuite.GENESIS;
 
 public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 	private static final String FALLBACK_ABI = "<empty>";
@@ -47,6 +53,7 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 	private Optional<Long> sentTinyHbars = Optional.of(0L);
 	private Optional<String> details = Optional.empty();
 	private Optional<Function<HapiApiSpec, Object[]>> paramsFn = Optional.empty();
+	private Optional<LongConsumer> gasObserver = Optional.empty();
 
 	@Override
 	public HederaFunctionality type() {
@@ -80,6 +87,11 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 	public HapiContractCall(String abi, String contract, Function<HapiApiSpec, Object[]> fn) {
 		this(abi, contract);
 		paramsFn = Optional.of(fn);
+	}
+
+	public HapiContractCall exposingGasTo(LongConsumer gasObserver) {
+		this.gasObserver = Optional.of(gasObserver);
+		return this;
 	}
 
 	public HapiContractCall gas(long amount) {
@@ -128,6 +140,24 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 						}
 				);
 		return b -> b.setContractCall(opBody);
+	}
+
+	@Override
+	protected void updateStateOf(HapiApiSpec spec) throws Throwable {
+		if (gasObserver.isPresent()) {
+			final var txnId = extractTxnId(txnSubmitted);
+			final var gasLookup = getTxnRecord(txnId)
+					.assertingNothing()
+					.noLogging()
+					.payingWith(GENESIS)
+					.nodePayment(1)
+					.exposingTo(record -> {
+						final var gasUsed = record.getContractCallResult().getGasUsed();
+						System.out.println(gasUsed);
+						gasObserver.get().accept(gasUsed);
+					});
+			allRunFor(spec, gasLookup);
+		}
 	}
 
 	@Override
