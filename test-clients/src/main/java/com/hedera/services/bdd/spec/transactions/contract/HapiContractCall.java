@@ -9,9 +9,9 @@ package com.hedera.services.bdd.spec.transactions.contract;
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,6 +42,7 @@ import static com.hedera.services.bdd.spec.queries.QueryVerbs.getTxnRecord;
 import static com.hedera.services.bdd.spec.transactions.TxnUtils.extractTxnId;
 import static com.hedera.services.bdd.spec.utilops.CustomSpecAssert.allRunFor;
 import static com.hedera.services.bdd.suites.HapiApiSuite.GENESIS;
+import static com.hederahashgraph.api.proto.java.ResponseCodeEnum.SUCCESS;
 
 public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 	private static final String FALLBACK_ABI = "<empty>";
@@ -70,7 +71,9 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 		call.details = Optional.of(actionable);
 		return call;
 	}
-	private HapiContractCall() { }
+
+	private HapiContractCall() {
+	}
 
 	public HapiContractCall(String contract) {
 		this.abi = FALLBACK_ABI;
@@ -127,7 +130,7 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 		}
 
 		byte[] callData = (abi != FALLBACK_ABI)
-				? CallTransaction.Function.fromJsonInterface(abi).encode(params) : new byte[] {};
+				? CallTransaction.Function.fromJsonInterface(abi).encode(params) : new byte[] { };
 
 		ContractCallTransactionBody opBody = spec
 				.txns()
@@ -144,20 +147,33 @@ public class HapiContractCall extends HapiTxnOp<HapiContractCall> {
 
 	@Override
 	protected void updateStateOf(HapiApiSpec spec) throws Throwable {
-		if (gasObserver.isPresent()) {
-			final var txnId = extractTxnId(txnSubmitted);
-			final var gasLookup = getTxnRecord(txnId)
-					.assertingNothing()
-					.noLogging()
-					.payingWith(GENESIS)
-					.nodePayment(1)
-					.exposingTo(record -> {
-						final var gasUsed = record.getContractCallResult().getGasUsed();
-						System.out.println(gasUsed);
-						gasObserver.get().accept(gasUsed);
-					});
-			allRunFor(spec, gasLookup);
+		if (actualStatus != SUCCESS) {
+			return;
 		}
+		if (gasObserver.isPresent()) {
+			doGasLookup(gasObserver.get(), spec, txnSubmitted, false);
+		}
+	}
+
+	static void doGasLookup(
+			final LongConsumer gasObserver,
+			final HapiApiSpec spec,
+			final Transaction txn,
+			final boolean isCreate
+	) throws Throwable {
+		final var txnId = extractTxnId(txn);
+		final var gasLookup = getTxnRecord(txnId)
+				.assertingNothing()
+				.noLogging()
+				.payingWith(GENESIS)
+				.nodePayment(1)
+				.exposingTo(record -> {
+					final var gasUsed = isCreate
+							? record.getContractCreateResult().getGasUsed()
+							: record.getContractCallResult().getGasUsed();
+					gasObserver.accept(gasUsed);
+				});
+		allRunFor(spec, gasLookup);
 	}
 
 	@Override

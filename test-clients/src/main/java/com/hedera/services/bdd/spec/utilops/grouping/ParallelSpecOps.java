@@ -23,7 +23,6 @@ package com.hedera.services.bdd.spec.utilops.grouping;
 import com.google.common.base.MoreObjects;
 import com.hedera.services.bdd.spec.HapiApiSpec;
 import com.hedera.services.bdd.spec.HapiSpecOperation;
-import com.hedera.services.bdd.spec.infrastructure.RegistryNotFound;
 import com.hedera.services.bdd.spec.utilops.UtilOp;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +58,7 @@ public class ParallelSpecOps extends UtilOp {
 		if (subErrors.size() > 0) {
 			String errMessages = subErrors.entrySet()
 					.stream()
-					.filter(e -> !(e.getValue() instanceof RegistryNotFound))
+//					.filter(e -> !(e.getValue() instanceof RegistryNotFound))
 					.peek(e -> e.getValue().printStackTrace())
 					.map(e -> e.getKey() + " :: " + e.getValue().getMessage())
 					.collect(joining(", "));
