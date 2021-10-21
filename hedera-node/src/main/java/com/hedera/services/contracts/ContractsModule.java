@@ -50,6 +50,7 @@ import com.hedera.services.contracts.operation.HederaExtCodeSizeOperation;
 import com.hedera.services.contracts.operation.HederaSStoreOperation;
 import com.hedera.services.contracts.operation.HederaSelfDestructOperation;
 import com.hedera.services.contracts.operation.HederaStaticCallOperation;
+import com.hedera.services.store.StoresModule;
 import com.hedera.services.txns.validation.OptionValidator;
 import com.hedera.services.utils.EntityNum;
 import com.hederahashgraph.api.proto.java.AccountID;
@@ -78,7 +79,9 @@ import static com.hedera.services.records.NoopRecordsHistorian.NOOP_RECORDS_HIST
 import static com.hedera.services.state.expiry.NoopExpiringCreations.NOOP_EXPIRING_CREATIONS;
 import static com.hedera.services.store.tokens.ExceptionalTokenStore.NOOP_TOKEN_STORE;
 
-@Module
+@Module(includes = {
+		StoresModule.class
+})
 public abstract class ContractsModule {
 	@Binds
 	@Singleton

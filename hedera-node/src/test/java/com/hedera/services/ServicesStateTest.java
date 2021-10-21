@@ -20,8 +20,11 @@ package com.hedera.services;
  * ‍
  */
 
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hedera.services.context.init.ServicesInitFlow;
+import com.hedera.services.disruptor.PrepareStageProcessor;
+import com.hedera.services.disruptor.PrepareStagePublisher;
 import com.hedera.services.sigs.ExpansionHelper;
 import com.hedera.services.sigs.order.SigRequirements;
 import com.hedera.services.sigs.sourcing.PubKeyToSigBytes;
@@ -44,6 +47,7 @@ import com.hedera.services.state.migration.StateVersions;
 import com.hedera.services.state.org.StateMetadata;
 import com.hedera.services.state.submerkle.ExchangeRates;
 import com.hedera.services.state.submerkle.SequenceNumber;
+import com.hedera.services.store.contracts.CodeCache;
 import com.hedera.services.txns.ProcessLogic;
 import com.hedera.services.txns.span.ExpandHandleSpan;
 import com.hedera.services.utils.EntityNum;
@@ -70,6 +74,7 @@ import com.swirlds.merkle.map.FCMapMigration;
 import com.swirlds.merkle.map.MerkleMap;
 import com.swirlds.merkle.tree.MerkleBinaryTree;
 import com.swirlds.merkle.tree.MerkleTreeInternalNode;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -161,6 +166,12 @@ class ServicesStateTest {
 	private ServicesState.FcmMigrator fcmMigrator;
 	@Mock
 	private Consumer<Boolean> blobMigrationFlag;
+	@Mock
+	private PrepareStageProcessor prepareStageProcessor;
+	@Mock
+	private PrepareStagePublisher prepareStagePublisher;
+	@Mock
+	private CodeCache codeCache;
 
 	@LoggingTarget
 	private LogCaptor logCaptor;
@@ -259,8 +270,21 @@ class ServicesStateTest {
 
 	@Test
 	void noMoreTransactionsIsNoop() {
+		subject.setMetadata(metadata);
+		given(metadata.app()).willReturn(app);
+		given(app.codeCache()).willReturn(codeCache);
+
+		CacheStats stats = CacheStats.of(100, 50, 40, 10, 10000, 100, 100);
+		given(codeCache.getStats()).willReturn(stats);
+
+		// when:
+		subject.noMoreTransactions();
+
 		// expect:
-		assertDoesNotThrow(subject::noMoreTransactions);
+		verify(codeCache).getStats();
+		assertThat(
+				logCaptor.debugLogs(),
+				contains(Matchers.startsWith("Code cache statistics")));
 	}
 
 	@Test
@@ -272,14 +296,17 @@ class ServicesStateTest {
 		given(app.expansionHelper()).willReturn(expansionHelper);
 		given(app.expandHandleSpan()).willReturn(expandHandleSpan);
 		given(app.retryingSigReqs()).willReturn(retryingKeyOrder);
+		given(app.prepareStageProcessor()).willReturn(prepareStageProcessor);
 		given(txnAccessor.getPkToSigsFn()).willReturn(pubKeyToSigBytes);
 		given(expandHandleSpan.track(transaction)).willReturn(txnAccessor);
+		given(prepareStageProcessor.getPublisher()).willReturn(prepareStagePublisher);
 
 		// when:
 		subject.expandSignatures(transaction);
 
 		// then:
 		verify(expansionHelper).expandIn(txnAccessor, retryingKeyOrder, pubKeyToSigBytes);
+		verify(prepareStagePublisher).submit(txnAccessor);
 	}
 
 	@Test
