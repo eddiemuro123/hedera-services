@@ -1167,32 +1167,32 @@ workflows:
 
   continuous-integration-gcp:
       jobs:
-        - build-artifact:
-            name: "artifact-build"
-            context: SonarCloud
-            filters:
-              branches:
-                ignore:
-                  - NONE
-            workflow-name: "Continuous-integration"
-        - sonar-check:
-            context: SonarCloud
-            requires:
-              - artifact-build
-            workflow-name: "Continuous-integration-GCP"
+#        - build-artifact:
+#            name: "artifact-build"
+#            context: SonarCloud
+#            filters:
+#              branches:
+#                ignore:
+#                  - NONE
+#            workflow-name: "Continuous-integration"
+#        - sonar-check:
+#            context: SonarCloud
+#            requires:
+#              - artifact-build
+#            workflow-name: "Continuous-integration-GCP"
 
         - build-platform-and-services:
             context: SonarCloud
             requires:
               - artifact-build
             workflow-name: "Continuous-integration-GCP"
-        - javadoc-generation:
-            context: Slack
-            requires:
-              - build-platform-and-services
-            pre-steps:
-              - attach_workspace:
-                  at: /
+#        - javadoc-generation:
+#            context: Slack
+#            requires:
+#              - build-platform-and-services
+#            pre-steps:
+#              - attach_workspace:
+#                  at: /
         - jrs-regression:
             context: Slack
             regression_path: /swirlds-platform/regression
