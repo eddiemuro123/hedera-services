@@ -1183,8 +1183,8 @@ workflows:
 
         - build-platform-and-services:
             context: SonarCloud
-            requires:
-              - artifact-build
+#            requires:
+#              - artifact-build
             workflow-name: "Continuous-integration-GCP"
 #        - javadoc-generation:
 #            context: Slack
@@ -1204,7 +1204,7 @@ workflows:
             slack_results_channel: "hedera-cicd"
             slack_summary_channel: "hedera-cicd"
             requires:
-              - javadoc-generation
+              -  build-platform-and-services
             pre-steps:
               - install-tools
               - attach_workspace:
