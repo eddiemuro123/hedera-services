@@ -571,7 +571,7 @@ commands:
 
             CI_PARAMETERS=""
             if [[ "<< parameters.continuous_integration >>" == "true" ]]; then
-              CI_PARAMETERS="${CI_PARAMETERS} -ci $CIRCLE_USERNAME+$CIRCLE_BUILD_URL"
+              CI_PARAMETERS="${CI_PARAMETERS} -ci $CIRCLE_USERNAME_$CIRCLE_BUILD_URL"
             fi
 
             pushd "${REGRESSION_PATH}" > /dev/null 2>&1
