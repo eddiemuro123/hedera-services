@@ -570,10 +570,10 @@ commands:
             fi
 
             CI_PARAMETERS=""
-            CI_BUILD_PARAMS=""
             if [[ "<< parameters.continuous_integration >>" == "true" ]]; then
-              CI_BUILD_PARAMS="-ci $JRS_USER_$CIRCLE_BUILD_URL"
-              CI_PARAMETERS="${CI_PARAMETERS} ${CI_BUILD_PARAMS}"
+              CI_PARAMETERS="${CI_PARAMETERS} -ci"
+              CI_PARAMETERS="${CI_PARAMETERS} ${JRS_USER}"
+              CI_PARAMETERS="${CI_PARAMETERS}${CIRCLE_BUILD_URL}"
             fi
 
             pushd "${REGRESSION_PATH}" > /dev/null 2>&1
