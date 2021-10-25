@@ -766,7 +766,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - 02339-services-reg-slack
     jobs:
       - build-platform-and-services
       - jrs-regression:
@@ -1430,10 +1430,10 @@ jobs:
         default: true
       slack_results_channel:
         type: string
-        default: "hedera-regression"
+        default: "hedera-regression-test"
       slack_summary_channel:
         type: string
-        default: "hedera-regression-summary"
+        default: "hedera-regression-test"
       workflow-name:
         type: string
         default: ""
