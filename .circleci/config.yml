@@ -521,6 +521,9 @@ commands:
       continuous_integration:
         type: boolean
         default: false
+      upgrade_migration:
+        type: boolean
+        default: false
     steps:
       - run:
           name: Configure JRS Regression Keys
@@ -573,6 +576,11 @@ commands:
             if [[ "<< parameters.continuous_integration >>" == "true" ]]; then
               CI_PARAMETERS="${CI_PARAMETERS} ${JRS_USER}"
               CI_PARAMETERS="${CI_PARAMETERS}_${CIRCLE_BUILD_URL}"
+            fi
+
+            UPGRADE_REPO_PATH=""
+            if [[ "<< parameters.upgrade_migration >>" == "true" ]]; then
+              UPGRADE_REPO_PATH="/upgradeRepo/hedera-services/"
             fi
 
             pushd "${REGRESSION_PATH}" > /dev/null 2>&1
@@ -782,6 +790,33 @@ workflows:
             - attach_workspace:
                 at: /
 
+  GCP-Daily-Services-Update-Migration-4N-1C:
+    triggers:
+      - schedule:
+          cron: "15 7 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build-platform-and-services
+      - increment-jar-version:
+          requires:
+            - build-platform-and-services
+      - jrs-regression:
+          context: Slack
+          regression_path: /swirlds-platform/regression
+          result_path: results/4N_1C/UpdateMigration
+          config_type: "daily"
+          workflow-name: "GCP-Daily-Services-Comp-Update-Migration-4N-1C"
+          upgrade_migration: true
+          requires:
+            - increment-jar-version
+          pre-steps:
+            - install-tools
+            - attach_workspace:
+                at: /
+
   # This workflow is for generating state file with large volume of NFTs
   # It's not intended to run on a daily basis.
   GCP-Create-Large-Volume-NFTs-SavedState:
@@ -811,36 +846,29 @@ workflows:
 
 
   # This workflow will be running normally in master branch on a daily basis
-  Update-Reconnect:
+
+  GCP-Daily-Services-Crypto-Migration-7N-1C:
+    triggers:
+      - schedule:
+          cron: "45 5 * * *"
+          filters:
+            branches:
+              only:
+                - master
     jobs:
       - build-platform-and-services
       - jrs-regression:
           context: Slack
           regression_path: /swirlds-platform/regression
-          result_path: results/4N_1C/Update
+          result_path: results/7N_1C/Migration
           config_type: "daily"
-          workflow-name: "GCP-Daily-Services-Comp-Update-Reconnect-4N-1C"
+          workflow-name: "GCP-Daily-Services-Crypto-Migration-7N-1C"
           requires:
             - build-platform-and-services
           pre-steps:
             - install-tools
             - attach_workspace:
                 at: /
-#  GCP-Daily-Services-Crypto-Migration-7N-1C:
-#    jobs:
-#      - build-platform-and-services
-#      - jrs-regression:
-#          context: Slack
-#          regression_path: /swirlds-platform/regression
-#          result_path: results/7N_1C/Migration
-#          config_type: "daily"
-#          workflow-name: "GCP-Daily-Services-Crypto-Migration-7N-1C"
-#          requires:
-#            - build-platform-and-services
-#          pre-steps:
-#            - install-tools
-#            - attach_workspace:
-#                at: /
 
 # The mainnet migration test needs to be run in a 18-node test network.
 # Enable this workflow to run on a daily only when a new release branch is tagged and branched.
@@ -1173,50 +1201,50 @@ workflows:
             - attach_workspace:
                 at: /
 
-#  continuous-integration-gcp:
-#      jobs:
-#        - build-artifact:
-#            name: "artifact-build"
-#            context: SonarCloud
-#            filters:
-#              branches:
-#                ignore:
-#                  - NONE
-#            workflow-name: "Continuous-integration"
-#        - sonar-check:
-#            context: SonarCloud
-#            requires:
-#              - artifact-build
-#            workflow-name: "Continuous-integration-GCP"
-#
-#        - build-platform-and-services:
-#            context: SonarCloud
-#            requires:
-#              - artifact-build
-#            workflow-name: "Continuous-integration-GCP"
-#        - javadoc-generation:
-#            context: Slack
-#            requires:
-#              - build-platform-and-services
-#            pre-steps:
-#              - attach_workspace:
-#                  at: /
-#        - jrs-regression:
-#            context: Slack
-#            regression_path: /swirlds-platform/regression
-#            result_path: results/4N_1C/CI
-#            config_type: "ci"
-#            workflow-name: "GCP-Commit-Services-Comp-Basic-4N-1C"
-#            name: "run-continuous-integration-gcp"
-#            continuous_integration: true
-#            slack_results_channel: "hedera-cicd"
-#            slack_summary_channel: "hedera-cicd"
-#            requires:
-#              - javadoc-generation
-#            pre-steps:
-#              - install-tools
-#              - attach_workspace:
-#                  at: /
+  continuous-integration-gcp:
+      jobs:
+        - build-artifact:
+            name: "artifact-build"
+            context: SonarCloud
+            filters:
+              branches:
+                ignore:
+                  - NONE
+            workflow-name: "Continuous-integration"
+        - sonar-check:
+            context: SonarCloud
+            requires:
+              - artifact-build
+            workflow-name: "Continuous-integration-GCP"
+
+        - build-platform-and-services:
+            context: SonarCloud
+            requires:
+              - artifact-build
+            workflow-name: "Continuous-integration-GCP"
+        - javadoc-generation:
+            context: Slack
+            requires:
+              - build-platform-and-services
+            pre-steps:
+              - attach_workspace:
+                  at: /
+        - jrs-regression:
+            context: Slack
+            regression_path: /swirlds-platform/regression
+            result_path: results/4N_1C/CI
+            config_type: "ci"
+            workflow-name: "GCP-Commit-Services-Comp-Basic-4N-1C"
+            name: "run-continuous-integration-gcp"
+            continuous_integration: true
+            slack_results_channel: "hedera-cicd"
+            slack_summary_channel: "hedera-cicd"
+            requires:
+              - javadoc-generation
+            pre-steps:
+              - install-tools
+              - attach_workspace:
+                  at: /
 jobs:
   build-artifact:
     parameters:
@@ -1330,6 +1358,30 @@ jobs:
           command: |
             cd /repo; export JAVA_HOME="/usr/local/java/jdk-12.0.2"; mvn javadoc:javadoc
 
+  increment-jar-version:
+    parameters:
+      workflow-name:
+        type: string
+        default: ""
+      executor:
+        name: build-executor
+      steps:
+        - attach_workspace:
+            at: /
+        - run:
+            name: Clone a new hedera-services repo for new version jars
+            command: |
+              sed -i -e 's/Host services-jrs-regression/Host services-jrs-regression\n HostName github.com/g' ~/.ssh/config
+              cd /; mkdir upgradeRepo; cd upgradeRepo; GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+              git clone git@github.com:hashgraph/hedera-services.git;
+
+        - run:
+            name: Increment version number
+            command: |
+              cd /upgradeRepo/hedera-services; export JAVA_HOME="/usr/local/java/jdk-12.0.2";
+              mvn versions:set -DnewVersion=0.21.0;
+              mvn --no-transfer-progress clean install -DskipTests ;
+
   build-platform-and-services:
     parameters:
       workflow-name:
@@ -1436,10 +1488,10 @@ jobs:
         default: true
       slack_results_channel:
         type: string
-        default: "hedera-update-test"
+        default: "hedera-regression-test"
       slack_summary_channel:
         type: string
-        default: "hedera-update-test"
+        default: "hedera-regression-test"
       workflow-name:
         type: string
         default: ""
@@ -1447,6 +1499,9 @@ jobs:
         type: string
         default: "/repo"
       continuous_integration:
+        type: boolean
+        default: false
+      upgrade_migration:
         type: boolean
         default: false
     executor:
@@ -1479,6 +1534,7 @@ jobs:
           slack_summary_channel: << parameters.slack_summary_channel >>
           hedera_services_path: << parameters.hedera_services_path >>
           continuous_integration: << parameters.continuous_integration >>
+          upgrade_migration: << parameters.upgrade_migration >>
       - when:
           condition: << parameters.automated_run >>
           steps:
