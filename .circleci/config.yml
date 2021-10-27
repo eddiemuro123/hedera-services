@@ -1379,7 +1379,7 @@ jobs:
             name: Increment version number
             command: |
               cd /upgradeRepo/hedera-services; export JAVA_HOME="/usr/local/java/jdk-12.0.2";
-              mvn versions:set -DnewVersion=0.21.0;
+              mvn versions:set -DnewVersion=0.21.0; mvn versions:commit;
               mvn --no-transfer-progress clean install -DskipTests ;
 
   build-platform-and-services:
